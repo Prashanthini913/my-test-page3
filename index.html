@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Magnum – Contact Us</title>
+    <style>
+        /* ── Magnum brand tokens ── */
+        :root {
+            --brand-dark:   #1a1a1a;
+            --brand-gold:   #c8971a;
+            --brand-cream:  #faf8f3;   /* matches LWC --page-bg for Magnum theme */
+            --brand-muted:  #666;
+            --brand-border: #e0ddd5;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body { font-family: system-ui, "Segoe UI", Arial, sans-serif; background: #fff; color: var(--brand-dark); }
+
+        /* ── Header ── */
+        .site-header {
+            background: var(--brand-dark);
+            padding: 1.125rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .site-logo {
+            color: var(--brand-gold);
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: .15em;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+        .site-nav { display: flex; gap: 2rem; list-style: none; }
+        .site-nav a { color: #ccc; font-size: .875rem; letter-spacing: .08em; text-transform: uppercase; text-decoration: none; transition: color .2s; }
+        .site-nav a:hover, .site-nav a[aria-current] { color: var(--brand-gold); }
+
+        /* ── View transitions ── */
+        .view { transition: opacity .35s ease, transform .35s ease; }
+        .view[hidden] { display: none !important; }
+        .view.out    { opacity: 0; transform: translateY(12px); pointer-events: none; }
+        .view.in     { opacity: 1; transform: translateY(0); }
+
+        /* ── LANDING VIEW ── */
+        #landingView {
+            min-height: calc(100vh - 60px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 3rem 2rem;
+            background: #fff;
+        }
+        .landing-inner h1 { font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 800; line-height: 1.15; color: var(--brand-dark); margin-bottom: 1rem; }
+        .landing-inner p  { color: var(--brand-muted); font-size: 1.1rem; line-height: 1.7; max-width: 52ch; margin: 0 auto 2rem; }
+        .btn-primary {
+            display: inline-block;
+            padding: .875rem 2.5rem;
+            background: var(--brand-dark);
+            color: var(--brand-gold);
+            font-size: .9rem;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            border: 2px solid var(--brand-dark);
+            border-radius: .25rem;
+            cursor: pointer;
+            transition: background .2s, color .2s;
+        }
+        .btn-primary:hover { background: var(--brand-gold); color: var(--brand-dark); border-color: var(--brand-gold); }
+
+        /* ── CONTACT VIEW ── */
+        #contactView { background: #fff; }
+
+        /* Hero strip */
+        .contact-hero {
+            padding: 2.5rem 2rem 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            border-bottom: 1px solid var(--brand-border);
+        }
+        .breadcrumb { font-size: .82rem; color: var(--brand-muted); margin-bottom: 1.25rem; }
+        .breadcrumb button { background: none; border: none; cursor: pointer; color: var(--brand-muted); padding: 0; font-size: inherit; }
+        .breadcrumb button:hover { color: var(--brand-dark); text-decoration: underline; }
+        .contact-hero h1 { font-size: clamp(1.6rem, 3vw, 2.5rem); font-weight: 800; color: var(--brand-dark); margin-bottom: .75rem; line-height: 1.2; }
+        .contact-hero p  { color: var(--brand-muted); font-size: 1rem; line-height: 1.75; max-width: 68ch; }
+
+        /* Two-column grid */
+        .contact-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2.5rem 2rem 5rem;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        /* Form column — background matches the LWC Magnum --page-bg so the iframe blends flush.
+           No overflow:hidden / no fixed height — page scrolls, iframe never gets its own scrollbar. */
+        .form-col {
+            background: var(--brand-cream);
+            border-radius: .5rem;
+        }
+        #salesforceFrame {
+            display: block;
+            width: 100%;
+            /* max(1500px, 100vh) ensures the iframe is always taller than its content
+               regardless of viewport size, so the browser never adds an inner scrollbar.
+               When the SF site posts its real height via postMessage we switch to that exact value. */
+            height: max(1500px, 100vh);
+            border: none;
+        }
+
+        /* Sidebar */
+        .sidebar { position: sticky; top: 5rem; }
+        .sidebar-heading {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--brand-dark);
+            margin-bottom: 1.25rem;
+            padding-bottom: .75rem;
+            border-bottom: 3px solid var(--brand-gold);
+            display: inline-block;
+        }
+        .contact-item { display: flex; gap: .875rem; margin-bottom: 1.5rem; align-items: flex-start; }
+        .contact-item-icon {
+            width: 2.25rem; height: 2.25rem; border-radius: 50%;
+            background: var(--brand-cream);
+            border: 1px solid var(--brand-border);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; font-size: 1rem;
+        }
+        .contact-item-label { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--brand-muted); margin-bottom: .2rem; }
+        .contact-item-body  { font-size: .9rem; line-height: 1.6; color: var(--brand-dark); }
+        .contact-item-body a { color: var(--brand-dark); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+        .contact-item-body a:hover { color: var(--brand-gold); }
+
+        /* ── Responsive ── */
+        @media (max-width: 780px) {
+            .contact-grid { grid-template-columns: 1fr; gap: 2rem; }
+            .sidebar { position: static; }
+            .site-nav { display: none; }
+        }
+        @media (max-width: 480px) {
+            #salesforceFrame { height: 1100px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .view { transition: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Site header ── -->
+<header class="site-header" role="banner">
+    <a class="site-logo" href="#" id="logoHome" aria-label="Magnum home">Magnum</a>
+    <nav aria-label="Site navigation">
+        <ul class="site-nav">
+            <li><a href="#">Products</a></li>
+            <li><a href="#">Stories</a></li>
+            <li><a href="#">Campaigns</a></li>
+            <li><a href="#" id="navContact" aria-current="false">Contact Us</a></li>
+        </ul>
+    </nav>
+</header>
+
+<!-- ── LANDING VIEW ── -->
+<div id="landingView" class="view in" role="main">
+    <div class="landing-inner">
+        <h1>We always love
+to hear from you.</h1>
+        <p>Have an idea or a product concern? You can get in touch with our team by selecting the reason for contacting us using the form below.</p>
+        <button class="btn-primary" id="openContact" aria-label="Open Contact Us form">Contact Us</button>
+    </div>
+</div>
+
+<!-- ── CONTACT VIEW ── -->
+<div id="contactView" class="view out" hidden role="main" aria-label="Contact Us">
+
+    <div class="contact-hero">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <button id="backHome" aria-label="Back to home">Home</button>
+            &nbsp;›&nbsp;Contact Us
+        </nav>
+        <h1>We always love to hear from you.</h1>
+        <p>
+            Have an idea or product concern? You would like more information about Magnum products?
+
+            You can get in touch with us using the form below by selecting the reason for contacting us.
+        </p>
+    </div>
+
+    <div class="contact-grid">
+
+        <!-- Salesforce form — seamlessly embedded -->
+        <section aria-label="Contact form">
+            <div class="form-col">
+                <iframe
+                    id="salesforceFrame"
+                    title="Contact Us – Magnum"
+                    src=""
+                    data-src="https://tmicc--cectest.sandbox.my.site.com/s/?language=en_US&brand=MAG345&country=GB"
+                    allow="clipboard-write"
+                    loading="lazy"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation-by-user-activation">
+                </iframe>
+            </div>
+        </section>
+
+        <!-- Sidebar contact info -->
+        <aside class="sidebar" aria-label="Other ways to contact us">
+            <span class="sidebar-heading">Contact us</span>
+
+            <div class="contact-item">
+                <div class="contact-item-icon" aria-hidden="true">📞</div>
+                <div>
+                    <div class="contact-item-label">Phone</div>
+                    <div class="contact-item-body"><a href="tel:18001022221">1800-10-22-221</a></div>
+                </div>
+            </div>
+
+            <div class="contact-item">
+                <div class="contact-item-icon" aria-hidden="true">🕐</div>
+                <div>
+                    <div class="contact-item-label">Hours</div>
+                    <div class="contact-item-body">9am – 9pm, 7 days a week</div>
+                </div>
+            </div>
+
+            <div class="contact-item">
+                <div class="contact-item-icon" aria-hidden="true">📍</div>
+                <div>
+                    <div class="contact-item-label">Address</div>
+                    <div class="contact-item-body">PO Box 14760
+Mumbai 400 099
+Maharashtra, India</div>
+                </div>
+            </div>
+
+            <div class="contact-item">
+                <div class="contact-item-icon" aria-hidden="true">✉️</div>
+                <div>
+                    <div class="contact-item-label">Email</div>
+                    <div class="contact-item-body"><a href="mailto:lever.care@unilever.com">lever.care@unilever.com</a></div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+</div><!-- /contactView -->
+
+
+<script>
+    const landingView = document.getElementById('landingView');
+    const contactView = document.getElementById('contactView');
+    const frame       = document.getElementById('salesforceFrame');
+
+    function showContact() {
+        // Lazy-load iframe on first open
+        if (!frame.src || frame.src === location.href) {
+            frame.src = frame.dataset.src;
+        }
+
+        // Transition out landing, in contact
+        landingView.classList.replace('in', 'out');
+        setTimeout(() => { landingView.hidden = true; }, 350);
+
+        contactView.hidden = false;
+        requestAnimationFrame(() => contactView.classList.replace('out', 'in'));
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        history.pushState({ view: 'contact' }, '', '#contact-us');
+
+        document.getElementById('navContact').setAttribute('aria-current', 'page');
+        document.title = 'Magnum – Contact Us';
+    }
+
+    function showLanding() {
+        contactView.classList.replace('in', 'out');
+        setTimeout(() => { contactView.hidden = true; }, 350);
+
+        landingView.hidden = false;
+        requestAnimationFrame(() => landingView.classList.replace('out', 'in'));
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        history.pushState({ view: 'landing' }, '', location.pathname);
+
+        document.getElementById('navContact').setAttribute('aria-current', 'false');
+        document.title = 'Magnum';
+    }
+
+    document.getElementById('openContact').addEventListener('click', showContact);
+    document.getElementById('navContact').addEventListener('click', (e) => { e.preventDefault(); showContact(); });
+    document.getElementById('backHome').addEventListener('click', showLanding);
+    document.getElementById('logoHome').addEventListener('click', (e) => { e.preventDefault(); showLanding(); });
+
+    // Browser back/forward
+    window.addEventListener('popstate', (e) => {
+        if (e.state?.view === 'contact') showContact();
+        else showLanding();
+    });
+
+    // Dynamic iframe resize from SF postMessage.
+    // When the LWC posts its real document height we pin the iframe to exactly that size,
+    // removing any dead whitespace while still keeping zero inner scrollbar.
+    window.addEventListener('message', (event) => {
+        if (event.origin !== 'https://tmicc--cectest.sandbox.my.site.com') return;
+        const { type, height } = event.data || {};
+        if (type === 'sfContactUsHeight' && typeof height === 'number') {
+            frame.style.height = (height + 32) + 'px'; /* 32px breathing room */
+        }
+    });
+</script>
+
+</body>
+</html>
+ 
